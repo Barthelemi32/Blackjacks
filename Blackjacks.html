@@ -1,0 +1,178 @@
+<!DOCTYPE html><html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Assistant Blackjack Pro 1xBet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #00ffe7;
+      margin-bottom: 20px;
+    }
+    select, button, input {
+      font-size: 16px;
+      margin: 5px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+    select, input {
+      background-color: #333;
+      color: #fff;
+    }
+    button {
+      background-color: #00cc88;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #009966;
+    }
+    .zone-carte, .etat-main, .resultat, .historique, .bankroll, .spy-log {
+      margin-top: 20px;
+    }
+    .etat-main {
+      font-size: 20px;
+      color: #ffdb58;
+    }
+    .resultat {
+      font-size: 26px;
+      font-weight: bold;
+      background-color: #111;
+      padding: 15px;
+      border-radius: 10px;
+      color: #00ff99;
+    }
+    .historique, .spy-log {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #1c1c1c;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .bankroll input {
+      width: 80px;
+    }
+    @media (max-width: 600px) {
+      select, button, input {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Blackjack Divin - 1xBet Ready</h1>  <div id="cartes-joueur" class="zone-carte">
+    <label>Carte Joueur 1:</label>
+    <select><option>--</option><option>A</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>J</option><option>Q</option><option>K</option></select>
+    <label>Carte Joueur 2:</label>
+    <select><option>--</option><option>A</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>J</option><option>Q</option><option>K</option></select>
+  </div><button onclick="ajouterCarte()">+ Ajouter carte</button>
+
+<br><br> <label>Croupier Carte visible:</label> <select id="croupier1"><option>--</option><option>A</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>J</option><option>Q</option><option>K</option></select> <label>Croupier Carte cachée:</label> <select id="croupier2"><option>--</option><option>A</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>J</option><option>Q</option><option>K</option></select>
+
+<br><br> <button onclick="analyserStrategie()">Analyser</button>
+
+  <div id="etat-main" class="etat-main"></div>
+  <div id="resultat" class="resultat"></div>
+  <div class="historique" id="historique"></div>  <div class="bankroll">
+    <h2>💰 Gestion de Bankroll & Détection</h2>
+    Capital: <input type="number" id="capital" value="100">
+    Mise: <input type="number" id="mise" value="5">
+    <button onclick="simulerResultat()">🎲 Enregistrer Résultat</button>
+    <div id="alert-strategique"></div>
+  </div>  <div class="spy-log" id="spylog"><h2>🧾 Journal de Stratégie</h2></div>  <script>
+    function getValeurCarte(carte) {
+      if (["J", "Q", "K"].includes(carte)) return 10;
+      if (carte === "A") return 11;
+      return parseInt(carte);
+    }
+
+    function ajouterCarte() {
+      const zone = document.getElementById("cartes-joueur");
+      let count = zone.querySelectorAll("select").length + 1;
+      if (count > 8) return;
+      const label = document.createElement("label");
+      label.textContent = `Carte Joueur ${count}:`;
+      const select = document.createElement("select");
+      ["--","A","2","3","4","5","6","7","8","9","10","J","Q","K"].forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v; opt.innerText = v; select.appendChild(opt);
+      });
+      zone.appendChild(document.createElement("br"));
+      zone.appendChild(label);
+      zone.appendChild(select);
+    }
+
+    function analyserStrategie() {
+      let selects = document.querySelectorAll("#cartes-joueur select");
+      let croupier = document.getElementById("croupier1").value;
+      if (!croupier) return document.getElementById("resultat").innerText = "Choisir la carte du croupier.";
+
+      let cartes = [];
+      selects.forEach(s => { if (s.value !== "--") cartes.push(s.value); });
+      if (cartes.length < 2) return document.getElementById("resultat").innerText = "Donnez au moins 2 cartes";
+
+      let valeurs = cartes.map(getValeurCarte);
+      let total = valeurs.reduce((a,b) => a+b, 0);
+      let as = cartes.filter(c => c === "A").length;
+      while (total > 21 && as) { total -= 10; as--; }
+      let soft = cartes.includes("A") && total <= 21;
+
+      let d = getValeurCarte(croupier);
+      let action = "TIRER";
+
+      if (total > 21) action = "💥 BUST";
+      else if (cartes.length === 2 && cartes[0] === cartes[1]) {
+        switch(cartes[0]) {
+          case 'A': case '8': action = "SPLIT"; break;
+          case '10': action = "STOP"; break;
+          case '9': action = ([2,3,4,5,6,8,9].includes(d)) ? "SPLIT" : "STOP"; break;
+          case '7': action = (d <= 7) ? "SPLIT" : "TIRER"; break;
+          case '6': action = (d <= 6) ? "SPLIT" : "TIRER"; break;
+          case '2': case '3': action = (d <= 7) ? "SPLIT" : "TIRER"; break;
+        }
+      } else if (soft) {
+        if (total <= 17) action = (d >= 3 && d <= 6) ? "DOUBLE" : "TIRER";
+        else if (total === 18) action = ([3,4,5,6].includes(d)) ? "DOUBLE" : ([2,7,8].includes(d) ? "STOP" : "TIRER");
+        else action = "STOP";
+      } else {
+        if (total >= 17) action = "STOP";
+        else if (total >= 13 && total <= 16 && d <= 6) action = "STOP";
+        else if (total === 12 && d >= 4 && d <= 6) action = "STOP";
+        else if (total === 11) action = "DOUBLE";
+        else if (total === 10 && d <= 9) action = "DOUBLE";
+        else if (total === 9 && d >= 3 && d <= 6) action = "DOUBLE";
+      }
+
+      let etat = `🧮 Total: ${total} ${soft ? '(Soft)' : '(Rigide)'}`;
+      if (total === 21 && cartes.length === 2) etat += " - Blackjack!";
+      document.getElementById("etat-main").innerText = etat;
+      document.getElementById("resultat").innerText = `💡 CONSEIL DIVIN: ${action}`;
+      document.getElementById("historique").innerHTML = `<div>${cartes.join('-')} vs ${croupier} ➡️ ${action}</div>` + document.getElementById("historique").innerHTML;
+      document.getElementById("spylog").innerHTML = `<div>${new Date().toLocaleTimeString()} | Main ${cartes.join(", ")} (${total}) contre ${croupier} ⇒ ${action}</div>` + document.getElementById("spylog").innerHTML;
+
+      if (total >= 19 && action === 'STOP' && d <= 6) {
+        document.getElementById('alert-strategique').innerText = "📊 Fort avantage joueur détecté !";
+      } else {
+        document.getElementById('alert-strategique').innerText = "";
+      }
+    }
+
+    function simulerResultat() {
+      let capital = parseFloat(document.getElementById('capital').value);
+      let mise = parseFloat(document.getElementById('mise').value);
+      let resultat = confirm("Tu as GAGNÉ cette main ? OK = oui, Annuler = non");
+      capital += resultat ? mise : -mise;
+      alert("💰 Nouveau capital : " + capital.toFixed(2));
+      document.getElementById('capital').value = capital.toFixed(2);
+    }
+  </script></body>
+</html>
